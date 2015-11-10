@@ -175,7 +175,7 @@ exports.getDatabaseManager = function (params) {
    * @param  {Function} callback
    * @return {[type]}
    */
-  var getCollection = exports.getCollection = function (name, callback) {
+  var getCollection = mgr.getCollection = function (name, callback) {
     connect(function (err, conn) {
       if (err) {
         callback(new VError(err, 'cannot connect to database'), null);
