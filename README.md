@@ -1,5 +1,5 @@
-mongo-easy
-==========
+mongo-utils
+===========
 
 A high-level wrapper to make interacting with MongoDB a piece of cake in simple 
 applications. No models, no fuss, just simplicity.
