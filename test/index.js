@@ -2,6 +2,7 @@
 
 var mongo = require('../index.js')
   , expect = require('chai').expect
+  , async = require('async')
   , fs = require('fs')
   , path = require('path')
   , ObjectID = require('mongodb').ObjectID
@@ -29,7 +30,8 @@ beforeEach(function (done) {
     mongoUrl: 'mongodb://localhost:27017/test'
   });
 
-  mongo.getCollection('test', function (err, c) {
+
+  mgr.getCollection('test', function (err, c) {
     expect(err).to.be.null;
     col = c;
 
@@ -40,7 +42,7 @@ beforeEach(function (done) {
 
 describe('#streamMongoCursorToHttpResponse', function () {
 
-  it('should stream an empty array to file', function () {
+  it('should stream an empty array to file', function (done) {
     col.find({}, function (err, cursor) {
 
       expect(err).to.be.null;
@@ -66,6 +68,7 @@ describe('#streamMongoCursorToHttpResponse', function () {
         }, 100);
       };
 
+      mongo.streamMongoCursorToHttpResponse(cursor, wstr)
     });
   });
 
@@ -186,6 +189,10 @@ describe('#Manager Object', function () {
 
   describe('#disconnect', function () {
     it('should disconnect successfully', function (done) {
+      mgr = mongo.getDatabaseManager({
+        mongoUrl: 'mongodb://localhost:27017/test',
+        idleTimeout: 2000
+      });
       mgr.connect(function (err) {
         expect(err).to.be.null;
 
@@ -260,6 +267,38 @@ describe('#Manager Object', function () {
       });
 
     });
+  });
+
+  describe('#getCollection', function () {
+
+    it('should get a collection reference successfully', function (done) {
+      mgr.getCollection('test', done);
+    });
+
+    it('should only open 2 connections for all queries', function (done) {
+
+      mgr = mongo.getDatabaseManager({
+        mongoUrl: 'mongodb://localhost:27017/test',
+        maxConnections: 2
+      });
+
+      var collections = [];
+
+      for (var i=0; i<10; i++) {
+        collections.push('test-collection-' + i);
+      }
+
+      async.each(collections, function (colName, next) {
+        mgr.getCollection(colName, function (err, c) {
+          next();
+        });
+      }, function (err) {
+        expect(err).to.be.null;
+        expect(mgr.getConnectionCount()).to.equal(2);
+        done();
+      });
+    });
+
   });
 
 });

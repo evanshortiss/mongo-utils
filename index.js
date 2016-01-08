@@ -2,6 +2,7 @@
 
 var mongo = require('mongodb')
   , url = require('url')
+  , pool = require('generic-pool').Pool
   , events = require('events')
   , assert = require('assert')
   , VError = require('verror')
@@ -82,10 +83,63 @@ exports.getDatabaseManager = function (params) {
     'params.mongoUrl is required and must be a string'
   );
 
+  if (params.maxConnections) {
+    assert.equal(
+      typeof params.maxConnections,
+      'number',
+      'params.maxConnections must be a number if provided'
+    );
+
+    assert.equal(
+      params.maxConnections > 0,
+      true,
+      'params.maxConnections must be a number greater than 0'
+    );
+  }
+
+  if (params.idleTimeout) {
+    assert.equal(
+      typeof params.idleTimeout,
+      'number',
+      'params.idleTimeout must be a number if provided'
+    );
+
+    assert.equal(
+      params.idleTimeout > 0,
+      true,
+      'params.idleTimeout must be a number greater than 0'
+    );
+  }
+
   var mgr = Object.create(events.EventEmitter.prototype)
     , log = require('fhlog').getLogger('Mongo (' + params.mongoUrl + ')')
-    , _connection = null;
+    , _conns = 0
+    , connPool = pool({
+      name: 'mongo-connections:' + params.mongoUrl,
+      create: connect,
+      destroy: function (conn) {
+        try {
+          log.d('Removing connection from pool');
+          conn.close();
+          _conns--;
+        } catch (e) {
+          log.e('Failed to close connection in pool');
+        }
+      },
+      // Default to a max of 5 connections
+      max: params.maxConnections || 5,
+      // Kill connections after 15 seconds
+      idleTimeoutMillis: params.idleTimeout || 15000
+    });
 
+
+  /**
+   * Determine the number of open connections
+   * @return {Number}
+   */
+  mgr.getConnectionCount = function () {
+    return _conns;
+  };
 
 
   /**
@@ -96,7 +150,7 @@ exports.getDatabaseManager = function (params) {
     if (typeof id === 'string') {
 
       if (typeof callback !== 'function') {
-        return new ObjectID(id)
+        return new ObjectID(id);
       } else {
         try {
           callback(null, new ObjectID(id));
@@ -120,37 +174,34 @@ exports.getDatabaseManager = function (params) {
    * Connect to the provided "mongoUrl" in params
    * @param  {Function} callback
    */
-  var connect = mgr.connect = function (callback) {
+  function connect (callback) {
 
     function onConnected (err, c) {
       if (err) {
         log.e('Failed to connect to MongoDB: %s', err);
-
-        _connection = null;
 
         callback(
           new VError(err, 'failed to connect to mongodb'),
           null
         );
       } else {
-        log.i('Connected successfully. Getting DB info');
-
-        _connection = c;
-        callback(null, _connection);
+        _conns++;
+        log.i('Connected successfully. Open connections: ' + _conns);
+        callback(null, c);
       }
     }
 
-    if (!_connection) {
-      log.i('Connecting to database with URL: %s', params.mongoUrl);
+    log.i('Connecting to database with URL: %s', params.mongoUrl);
 
-      MongoClient.connect(params.mongoUrl, onConnected);
-    } else {
-      log.d('Called connect, returning existing connection.');
+    MongoClient.connect(params.mongoUrl, onConnected);
+  }
 
-      callback(null, _connection);
-    }
 
-  };
+  /**
+   * Exposes the connect function
+   * @type {Function}
+   */
+  mgr.connect = connect;
 
 
   /**
@@ -175,15 +226,13 @@ exports.getDatabaseManager = function (params) {
    * @param  {Function} callback
    * @return {[type]}
    */
-  var getCollection = mgr.getCollection = function (name, callback) {
-    connect(function (err, conn) {
-      if (err) {
-        callback(new VError(err, 'cannot connect to database'), null);
-      } else {
+  var getCollection = mgr.getCollection = connPool.pooled(
+    function returnCollection (conn, name, callback) {
+      setImmediate(function () {
         callback(null, conn.collection(name));
-      }
-    });
-  };
+      });
+    }
+  );
 
 
   /**
@@ -191,14 +240,12 @@ exports.getDatabaseManager = function (params) {
    * @param  {Function} [callback]
    */
   mgr.disconnect = function (callback) {
-    if (_connection) {
-      _connection.close();
-      _connection = null;
-    }
-
-    if (callback) {
-      callback(null);
-    }
+    connPool.drain(function () {
+      connPool.destroyAllNow();
+      if (callback) {
+        callback(null);
+      }
+    });
   };
 
 
@@ -243,7 +290,7 @@ exports.getDatabaseManager = function (params) {
       }
     }
 
-    connect(onConnected);
+    connPool.acquire(onConnected);
   };
 
 
