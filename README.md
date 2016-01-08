@@ -22,6 +22,8 @@ Returns a database _Manager_ instance. _params_ is required and should contain:
 
 * mongoUrl - The database connection string. Must contain the database name e.g 
 _mongodb://localhost:27017/database-name_
+* maxConnections - Use this to set a max number of connections. Default is 5
+* idleTimeout - How long to wait before closing a connection.
 
 ## ensureObjectId(id, callback)
 Ensures the passed in _id_ is an instance of Mongo's ObjectID. If it's a String 
