@@ -187,21 +187,6 @@ describe('#Manager Object', function () {
   });
 
 
-  describe('#disconnect', function () {
-    it('should disconnect successfully', function (done) {
-      mgr = mongo.getDatabaseManager({
-        mongoUrl: 'mongodb://localhost:27017/test',
-        idleTimeout: 2000
-      });
-      mgr.connect(function (err) {
-        expect(err).to.be.null;
-
-        mgr.disconnect(done);
-      });
-    });
-  });
-
-
   describe('#getDbInfo', function () {
     it('should return db info', function (done) {
       mgr.getDbInfo(function (err, info) {

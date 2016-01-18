@@ -14,6 +14,21 @@ var mongo = require('mongodb')
 
 
 /**
+ * The fhlog module that this module is using.
+ * Useful if you want to stop logging etc
+ * @type {Objecy}
+ */
+exports.fhlog = require('fhlog');
+
+
+/**
+ * An fhlog logger instance that this module uses
+ * @type {fhlog.Logger}
+ */
+exports.logger = log;
+
+
+/**
  * Streams data from a Mongo cursor to a http response stream
  * @param  {Object} cursor
  * @param  {Object} res
@@ -97,39 +112,19 @@ exports.getDatabaseManager = function (params) {
     );
   }
 
-  if (params.idleTimeout) {
-    assert.equal(
-      typeof params.idleTimeout,
-      'number',
-      'params.idleTimeout must be a number if provided'
-    );
-
-    assert.equal(
-      params.idleTimeout > 0,
-      true,
-      'params.idleTimeout must be a number greater than 0'
-    );
-  }
 
   var mgr = Object.create(events.EventEmitter.prototype)
-    , log = require('fhlog').getLogger('Mongo (' + params.mongoUrl + ')')
+    , log = mgr.logger = require('fhlog').getLogger(
+        'Mongo (' + params.mongoUrl + ')'
+      )
     , _conns = 0
     , connPool = pool({
       name: 'mongo-connections:' + params.mongoUrl,
       create: connect,
-      destroy: function (conn) {
-        try {
-          log.d('Removing connection from pool');
-          conn.close();
-          _conns--;
-        } catch (e) {
-          log.e('Failed to close connection in pool');
-        }
-      },
       // Default to a max of 5 connections
       max: params.maxConnections || 5,
-      // Kill connections after 15 seconds
-      idleTimeoutMillis: params.idleTimeout || 15000
+      // Never kill connections, they can be reused
+      idleTimeoutMillis: Infinity
     });
 
 
@@ -236,20 +231,6 @@ exports.getDatabaseManager = function (params) {
 
 
   /**
-   * Disconnect from Mongo.
-   * @param  {Function} [callback]
-   */
-  mgr.disconnect = function (callback) {
-    connPool.drain(function () {
-      connPool.destroyAllNow();
-      if (callback) {
-        callback(null);
-      }
-    });
-  };
-
-
-  /**
    * Retrieves database info such as the MongoDB version.
    * @param {String} name
    */
@@ -339,7 +320,7 @@ exports.getDatabaseManager = function (params) {
 
       function onCollection (err, collection) {
         if (err) {
-          callback(new VError('failed to get collection'), null);
+          callback(new VError(err, 'failed to get collection'), null);
         } else {
           // Call the original function with the injected collection and args
           fn.apply(fn, [collection].concat(args));
