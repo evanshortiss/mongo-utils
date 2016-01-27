@@ -26,6 +26,8 @@ beforeEach(removeTestFile);
 afterEach(removeTestFile);
 
 beforeEach(function (done) {
+  mongo.disableErrorMode();
+
   mgr = mongo.getDatabaseManager({
     mongoUrl: 'mongodb://localhost:27017/test'
   });
@@ -39,6 +41,64 @@ beforeEach(function (done) {
     c.remove({}, done);
   });
 });
+
+
+// TODO: shoudl probably clear module cache here
+describe('#errorModeEnabled/enableErrorMode/disableErrorMode', function () {
+  it('Should return false', function () {
+    expect(mongo.errorModeEnabled()).to.be.false;
+  });
+
+  it('Should return true', function () {
+    mongo.enableErrorMode();
+    expect(mongo.errorModeEnabled()).to.be.true;
+  });
+
+  it('Should return false', function () {
+    mongo.disableErrorMode();
+    expect(mongo.errorModeEnabled()).to.be.false;
+  });
+});
+
+
+describe('#enableErrorMode', function () {
+  it('Should cause collection retrieval to fail', function (done) {
+    mongo.enableErrorMode();
+
+    mgr = mongo.getDatabaseManager({
+      mongoUrl: 'mongodb://localhost:27017/test',
+      maxConnections: 2
+    });
+
+    mgr.getCollection('test', function (err, col) {
+      expect(err).to.be.an('Error');
+      expect(col).to.be.null
+      done();
+    });
+  });
+});
+
+
+describe('#disableErrorMode', function () {
+  it('Should run successfully', function (done) {
+    mongo.disableErrorMode();
+
+    mgr = mongo.getDatabaseManager({
+      mongoUrl: 'mongodb://localhost:27017/test',
+      maxConnections: 2
+    });
+
+    mgr.getCollection('test', function (err, col) {
+      expect(err).to.null;
+      expect(col).to.be.defined;
+      expect(col).to.not.be.null;
+      done();
+    });
+  });
+
+
+});
+
 
 describe('#streamMongoCursorToHttpResponse', function () {
 

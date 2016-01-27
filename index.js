@@ -10,7 +10,8 @@ var mongo = require('mongodb')
   , Server = require('mongodb').Server
   , MongoClient = mongo.MongoClient
   , log = require('fhlog').getLogger('Mongo Utils')
-  , Db = mongo.Db;
+  , Db = mongo.Db
+  , errorMode = false;
 
 
 /**
@@ -26,6 +27,39 @@ exports.fhlog = require('fhlog');
  * @type {fhlog.Logger}
  */
 exports.logger = log;
+
+
+/**
+ * Prevents database operations by returning an error whenever a collection
+ * is requested. Useful for testing failure scenarios in tests where mocking
+ * might not be possible due to a dependency chain.
+ *
+ * If using mocha this can be tollged using befor(Each)/after(Each) hooks.
+ */
+exports.enableErrorMode = function () {
+  errorMode = true;
+};
+
+
+/**
+ * Prevents database operations by returning an error whenever a collection
+ * is requested. Useful for testing failure scenarios.
+ *
+ * If using mocha this can be tollged using before/after hooks.
+ */
+exports.disableErrorMode = function () {
+  errorMode = false;
+};
+
+
+
+/**
+ * Determine if error mode is enabled.
+ * @return {Boolean}
+ */
+exports.errorModeEnabled = function () {
+  return errorMode;
+};
 
 
 /**
@@ -219,12 +253,18 @@ exports.getDatabaseManager = function (params) {
    * Get a collection object.
    * @param  {String}   name
    * @param  {Function} callback
-   * @return {[type]}
    */
   var getCollection = mgr.getCollection = connPool.pooled(
     function returnCollection (conn, name, callback) {
       setImmediate(function () {
-        callback(null, conn.collection(name));
+        if (errorMode) {
+          callback(
+            new Error('This is a fake error. mongo-util error mode enabled.'),
+            null
+          );
+        } else {
+          callback(null, conn.collection(name));
+        }
       });
     }
   );
