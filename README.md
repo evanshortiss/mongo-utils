@@ -12,9 +12,10 @@ Some of the code in this module was inspired or is similar to code worked on by
 [@Keyang](https://github.com/Keyang/)
 
 ## Install
-
+Add this to _package.json_ where _{RELEASE}_ is a valid tag listed
+ [here](https://github.com/TkeITMobility/mongo-utils/releases).
 ```
-npm i mongo-easy
+"mongo-utils": "git+https://github.com/evanshortiss/mongo-utils.git#{RELEASE}",
 ```
 
 ## API
@@ -33,7 +34,7 @@ it will attempt to cast it to an ObjectID. Useful for making queries that rely
 on the _\_id_ field. Example:
 
 ```javascript
-var mongo = require('mongo-easy');
+var mongo = require('mongo-util');
 
 mongo.ensureObjectId('55cb560222cde60000000001', function (err, mid) {
   // mid will be an ObjectID instance, err is null
@@ -51,7 +52,7 @@ loading the entire set of results into memory.
 Here's a simple example:
 
 ```javascript
-var mongo = require('mongo-easy');
+var mongo = require('mongo-util');
 
 app.get('/users', function (req, res, next) {
   var testDb = mongo.getDatabaseManager({
@@ -135,7 +136,7 @@ For example:
 /**
  * file: models/users
  */
-var db = require('mongo-easy').getDatabaseManager({
+var db = require('mongo-util').getDatabaseManager({
     mongoUrl: 'mongodb://localhost:27017/test'
   });
 
@@ -170,7 +171,7 @@ also inject a collection parameter.
 /**
  * file: models/users
  */
-var db = require('mongo-easy').getDatabaseManager({
+var db = require('mongo-util').getDatabaseManager({
     mongoUrl: 'mongodb://localhost:27017/test'
   });
 
