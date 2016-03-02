@@ -354,7 +354,7 @@ exports.getDatabaseManager = function (params) {
       assert.equal(
         typeof callback,
         'function',
-        'callback must be passed as the final argument to any function passed ' +
+        'callback must be passed as the final argument to any function passed' +
           'through composeInteraction()'
       );
 

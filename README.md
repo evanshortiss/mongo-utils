@@ -1,12 +1,14 @@
 mongo-utils
 ===========
 
-A high-level wrapper to make interacting with MongoDB a piece of cake in simple 
+[![Circle CI](https://circleci.com/gh/evanshortiss/mongo-utils/tree/master.svg?style=svg)](https://circleci.com/gh/evanshortiss/mongo-utils/tree/master)
+
+A high-level wrapper to make interacting with MongoDB a piece of cake in simple
 applications. No models, no fuss, just simplicity.
 
 ## Credits
-Some of the code in this module was inspired or is similar to code worked on by 
-[@Crosbie](https://github.com/Crosbie/) and 
+Some of the code in this module was inspired or is similar to code worked on by
+[@Crosbie](https://github.com/Crosbie/) and
 [@Keyang](https://github.com/Keyang/)
 
 ## Install
@@ -20,14 +22,14 @@ npm i mongo-easy
 ## getDatabaseManager(params)
 Returns a database _Manager_ instance. _params_ is required and should contain:
 
-* mongoUrl - The database connection string. Must contain the database name e.g 
+* mongoUrl - The database connection string. Must contain the database name e.g
 _mongodb://localhost:27017/database-name_
 * maxConnections - Use this to set a max number of connections. Default is 5
 * idleTimeout - How long to wait before closing a connection.
 
 ## ensureObjectId(id, callback)
-Ensures the passed in _id_ is an instance of Mongo's ObjectID. If it's a String 
-it will attempt to cast it to an ObjectID. Useful for making queries that rely 
+Ensures the passed in _id_ is an instance of Mongo's ObjectID. If it's a String
+it will attempt to cast it to an ObjectID. Useful for making queries that rely
 on the _\_id_ field. Example:
 
 ```javascript
@@ -43,7 +45,7 @@ mongo.ensureObjectId('not-a-valid-mongo-id-string', function (err, mid) {
 ```
 
 ## streamMongoCursorToHttpResponse(cursor, response)
-Streams a Mongo cursor a HTTP response (OutgoingResponse) stream to avoid 
+Streams a Mongo cursor a HTTP response (OutgoingResponse) stream to avoid
 loading the entire set of results into memory.
 
 Here's a simple example:
@@ -81,8 +83,8 @@ app.get('/users', function (req, res, next) {
 Returned by a call to _getDatabaseManager_.
 
 #### connect(callback)
-Connect to the database. There's no need to call this since functions that 
-require a connection will call it automatically, but it's useful to verify a 
+Connect to the database. There's no need to call this since functions that
+require a connection will call it automatically, but it's useful to verify a
 connection can be established.
 
 #### purgeCollection(name, callback)
@@ -95,7 +97,7 @@ Get a reference to a collection.
 Disconnect from MongoDB.
 
 #### getDbInfo
-Get information about the database this Manager is connected to. Will return 
+Get information about the database this Manager is connected to. Will return
 something similar to this:
 
 ```json
@@ -121,9 +123,9 @@ something similar to this:
 ```
 
 #### composeInteraction(collectionName, func)
-Returns a function that will automatically have a collection reference injected 
-into it as the first parameter. This saves you the effort of having to get a 
-connection and then using that to get the collection reference for each 
+Returns a function that will automatically have a collection reference injected
+into it as the first parameter. This saves you the effort of having to get a
+connection and then using that to get the collection reference for each
 function that performs database interaction.
 
 For example:
@@ -138,7 +140,7 @@ var db = require('mongo-easy').getDatabaseManager({
   });
 
 exports.getUsers = db.composeInteraction(
-  'users', 
+  'users',
   // userColl is auto injected!
   function getUserByFirstName (userColl, fname, callback) {
     userColl.findOne({
@@ -160,7 +162,7 @@ users.getUserByFirstName('john', function (err, user) {
 ```
 
 ### generateInjectedFunctionsFromArray(collectionName, module.exports, funcs)
-Uses _composeInteraction_ to automatically "export" the given functions and 
+Uses _composeInteraction_ to automatically "export" the given functions and
 also inject a collection parameter.
 
 ```javascript
@@ -173,7 +175,7 @@ var db = require('mongo-easy').getDatabaseManager({
   });
 
 db.generateInjectedFunctionsFromArray('users', module.exports, [
-  
+
   function getUserByUsername (collection, name, callback) {
     collection.findOne({
       username: name

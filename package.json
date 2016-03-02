@@ -4,7 +4,11 @@
   "description": "Mongo utilities for simple applications to reduce repetition.",
   "main": "index.js",
   "scripts": {
-    "test": "env NODE_PATH='.' NODE_ENV='test' mocha ./test/index.js"
+    "check-coverage": "istanbul check-coverage --statements 90 --branches 90 --functions 90 --lines 90",
+    "lint": "npm run-script jshint && npm run-script linelint",
+    "jshint": "jshint ./index.js",
+    "linelint": "linelint ./index.js",
+    "test": "npm run-script lint && env NODE_PATH=. env NODE_ENV=test istanbul cover -x *.test.js _mocha test/*.js && npm run-script check-coverage"
   },
   "keywords": [
     "mongo",
@@ -18,7 +22,11 @@
     "async": "^1.5.2",
     "chai": "^3.4.0",
     "deep-eql": "^0.1.3",
-    "mocha": "^2.3.3"
+    "istanbul": "^0.4.2",
+    "jshint": "^2.9.1",
+    "linelint": "^1.0.0",
+    "mocha": "^2.4.5",
+    "proxyquire": "^1.7.4"
   },
   "dependencies": {
     "fhlog": "^0.12.1",
