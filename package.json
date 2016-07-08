@@ -23,7 +23,7 @@
   "dependencies": {
     "fhlog": "^0.12.1",
     "generic-pool": "^2.3.1",
-    "mongodb": "^2.0.36",
+    "mongodb": "~2.1.0",
     "verror": "^1.6.0"
   }
 }
