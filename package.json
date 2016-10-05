@@ -29,9 +29,9 @@
     "proxyquire": "^1.7.4"
   },
   "dependencies": {
-    "fhlog": "^0.12.1",
-    "generic-pool": "^2.3.1",
-    "mongodb": "^2.0.36",
-    "verror": "^1.6.0"
+    "fhlog": "~0.12.1",
+    "generic-pool": "~2.3.1",
+    "mongodb": "2.1.21",
+    "verror": "~1.6.0"
   }
 }
